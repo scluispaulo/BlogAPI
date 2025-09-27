@@ -7,18 +7,30 @@ public static class PostEndpoints
     {
        var apiPosts = app.MapGroup("/api/posts");
 
-        apiPosts.MapGet("/", async (BlogContext db) =>
+        apiPosts.MapGet("/", async (BlogContext db, int page = 1, int pageSize = 10) =>
         {
-            var posts = await db.BlogPosts
+            var query = db.BlogPosts.Include(p => p.Comments).OrderBy(p => p.Id);
+
+            var totalCount = await query.CountAsync();
+
+            var posts = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .Select(p => new PostItemDto
                 {
                     Id = p.Id,
                     Title = p.Title,
                     CommentCount = p.Comments.Count
                 })
-                .ToArrayAsync();
+                .ToListAsync();
 
-            return Results.Ok(posts);
+            return Results.Ok(new
+            {
+                TotalCount = totalCount,
+                Page = page,
+                PageSize = pageSize,
+                Items = posts
+            });
         });
 
         apiPosts.MapGet("/{id:int}", async (int id, BlogContext db) =>
