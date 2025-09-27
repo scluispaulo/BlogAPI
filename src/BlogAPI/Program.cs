@@ -1,3 +1,4 @@
+using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 
@@ -12,6 +13,10 @@ builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "BlogApi", Version = "v1" });
 });
+
+// FluentValidation
+builder.Services.AddValidatorsFromAssemblyContaining<CreatePostDtoValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<CreateCommentDtoValidator>();
 
 var app = builder.Build();
 

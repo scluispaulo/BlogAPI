@@ -1,3 +1,4 @@
+using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 
 public static class PostEndpoints
@@ -49,8 +50,15 @@ public static class PostEndpoints
             return Results.Ok(dto);
         });
 
-        apiPosts.MapPost("/", async (CreatePostDto input, BlogContext db) =>
+        apiPosts.MapPost("/", async (
+            CreatePostDto input,
+            BlogContext db,
+            IValidator<CreatePostDto> validator) =>
         {
+            var validationResult = await validator.ValidateAsync(input);
+            if (!validationResult.IsValid)
+                return Results.ValidationProblem(validationResult.ToDictionary());
+
             var post = new BlogPost
             {
                 Title = input.Title.Trim(),

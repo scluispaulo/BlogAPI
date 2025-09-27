@@ -1,9 +1,19 @@
+using FluentValidation;
+
 public static class CommentEndpoints
 {
     public static void MapCommentEndpoints(this WebApplication app)
     {
-        app.MapPost("/api/posts/{id:int}/comments", async (int id, CreateCommentDto input, BlogContext db) =>
+        app.MapPost("/api/posts/{id:int}/comments", async (
+            int id,
+            CreateCommentDto input,
+            BlogContext db,
+            IValidator<CreateCommentDto> validator) =>
         {
+            var validationResult = await validator.ValidateAsync(input);
+            if (!validationResult.IsValid)
+                return Results.ValidationProblem(validationResult.ToDictionary());
+
             var post = await db.BlogPosts.FindAsync(id);
             if (post is null)
                 return Results.NotFound();
