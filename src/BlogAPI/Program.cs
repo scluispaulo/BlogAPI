@@ -19,5 +19,6 @@ app.UseSwagger();
 app.UseSwaggerUI();
 
 app.MapPostEndpoints();
+app.MapCommentEndpoints();
 
 app.Run();

@@ -1,0 +1,1 @@
+public record CreateCommentDto(string Author, string Content);
