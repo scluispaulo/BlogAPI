@@ -20,6 +20,30 @@ builder.Services.AddValidatorsFromAssemblyContaining<CreateCommentDtoValidator>(
 
 var app = builder.Build();
 
+// Global error handling
+app.UseExceptionHandler(exceptionApp =>
+{
+    exceptionApp.Run(async context =>
+    {
+        context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+        context.Response.ContentType = "application/json";
+
+        var exceptionHandlerPathFeature =
+            context.Features.Get<Microsoft.AspNetCore.Diagnostics.IExceptionHandlerPathFeature>();
+
+        var error = new
+        {
+            message = "An unexpected error occurred.",
+            detail = app.Environment.IsDevelopment()
+                ? exceptionHandlerPathFeature?.Error.Message
+                : null,
+            path = exceptionHandlerPathFeature?.Path
+        };
+
+        await context.Response.WriteAsJsonAsync(error);
+    });
+});
+
 app.UseSwagger();
 app.UseSwaggerUI();
 
