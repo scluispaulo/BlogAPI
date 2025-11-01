@@ -1,3 +1,5 @@
+using System.Text.Json;
+using BlogAPI.Helpers;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 
@@ -7,30 +9,31 @@ public static class PostEndpoints
     {
        var apiPosts = app.MapGroup("/api/posts");
 
-        apiPosts.MapGet("/", async (BlogContext db, int page = 1, int pageSize = 10) =>
+        apiPosts.MapGet("/", async (BlogContext db, HttpContext httpContext, int page = 1, int pageSize = 10) =>
         {
             var query = db.BlogPosts.Include(p => p.Comments).OrderBy(p => p.Id);
 
-            var totalCount = await query.CountAsync();
+            var paginated = await PaginatedList<BlogPost>.CreateAsync(query, page, pageSize);
 
-            var posts = await query
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .Select(p => new PostItemDto
-                {
-                    Id = p.Id,
-                    Title = p.Title,
-                    CommentCount = p.Comments.Count
-                })
-                .ToListAsync();
-
-            return Results.Ok(new
+            var postDtos = paginated.Select(p => new PostItemDto
             {
-                TotalCount = totalCount,
-                Page = page,
-                PageSize = pageSize,
-                Items = posts
-            });
+                Id = p.Id,
+                Title = p.Title,
+                CommentCount = p.Comments.Count
+            }).ToArray();
+
+            var paginatedMetadata = new
+            {
+                paginated.CurrentPage,
+                paginated.PageSize,
+                paginated.TotalCount,
+                paginated.TotalPages,
+                Items = postDtos
+            };
+
+            httpContext.Response.Headers["X-Pagination"] = JsonSerializer.Serialize(paginatedMetadata);
+
+            return Results.Ok(paginatedMetadata);
         });
 
         apiPosts.MapGet("/{id:int}", async (int id, BlogContext db) =>
