@@ -7,6 +7,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<BlogContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("SqliteConnectionString")));
 
+builder.Services.AddControllers();
+
 // Swagger
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
@@ -47,7 +49,6 @@ app.UseExceptionHandler(exceptionApp =>
 app.UseSwagger();
 app.UseSwaggerUI();
 
-app.MapPostEndpoints();
-app.MapCommentEndpoints();
+app.MapControllers();
 
 app.Run();
